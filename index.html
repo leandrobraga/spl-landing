@@ -1,409 +1,690 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>SPL — Sistema de Processo Legislativo</title>
-<link rel="preconnect" href="https://fonts.googleapis.com" />
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="" />
-<link href="https://fonts.googleapis.com/css2?family=Rubik:ital,wght@0,300..700;1,400&family=Source+Serif+4:opsz,wght@8..60,400;8..60,600&display=swap" rel="stylesheet" />
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SPL: Sistema de Processo Legislativo</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/lucide@0.462.0/dist/umd/lucide.js"></script>
 <style>
-  body { margin: 0; background: #FFFFFF; color: #0F1720; font-family: Rubik, Helvetica, Arial, sans-serif; -webkit-font-smoothing: antialiased; }
-  * { box-sizing: border-box; }
-  a { color: #27547F; text-decoration: none; }
-  a:hover { color: #1D4065; }
-  p { text-wrap: pretty; }
-  summary::-webkit-details-marker { display: none; }
-  summary { list-style: none; }
+  /* ===== Design tokens — paleta institucional do SPL ===== */
+  :root{
+    --background:#f8fafc;
+    --foreground:#0f172a;
+    --primary:#2563eb;
+    --primary-hover:#1d4ed8;
+    --accent:#3b82f6;
+    --muted:#f1f5f9;
+    --muted-foreground:#64748b;
+    --border:#cbd5e1;
+    --card:#ffffff;
+    --brand-dark:#1e3a5f;
+    --brand-darker:#0f172a;
+    --card-on-dark:#1e293b;
+    --text-on-dark-muted:#94a3b8;
+    --destructive:#ef4444;
+    --warning:#f59e0b;
+    --success:#22c55e;
+    --radius:10px;
+    --radius-lg:14px;
+    --shadow-sm: 0 1px 2px rgba(15,23,42,0.05), 0 1px 3px rgba(15,23,42,0.06);
+    --shadow-md: 0 8px 24px rgba(15,23,42,0.08);
+    --maxw:1180px;
+  }
+  /* Página institucional com identidade fixa (mesma paleta usada no produto) —
+     não é adaptativa ao tema do sistema, é a marca do SPL. */
+  @media (prefers-color-scheme: dark){ :root:not([data-theme="light"]){ color-scheme: light; } }
+  :root[data-theme="dark"]{ color-scheme: light; }
 
-  .nav-desktop { display: flex; align-items: center; gap: clamp(14px,2vw,28px); }
-  .nav-mobile-cta { display: none; }
-  .mobile-bar-spacer, .mobile-bar { display: none; }
-  .nav-desktop a.cta-header:hover,
-  .nav-mobile-cta:hover,
-  .hero-cta:hover,
-  .incluso-cta:hover,
-  .final-cta:hover,
-  .footer-cta:hover,
-  .mobile-bar a:hover { background:#27547F; color:#FFFFFF; }
-  .carousel-btn:hover { background:#FFFFFF; border-color:#74A2C9; }
-  details summary:hover { color:#27547F; }
+  *{ box-sizing:border-box; }
+  html{ scroll-behavior:smooth; }
+  body{
+    margin:0;
+    background:var(--background);
+    color:var(--foreground);
+    font-family:"Inter", ui-sans-serif, system-ui, sans-serif;
+    font-size:16px;
+    line-height:1.6;
+    -webkit-font-smoothing:antialiased;
+  }
+  h1,h2,h3{ margin:0; line-height:1.18; letter-spacing:-0.02em; font-weight:800; color:var(--foreground); }
+  p{ margin:0; }
+  a{ color:inherit; text-decoration:none; }
+  img{ max-width:100%; display:block; }
+  ::selection{ background:var(--accent); color:#fff; }
+  :focus-visible{ outline:2px solid var(--primary); outline-offset:3px; border-radius:4px; }
 
-  @media (max-width: 899px) {
-    .nav-desktop { display: none; }
-    .nav-mobile-cta { display: inline-flex; }
-    .mobile-bar-spacer { display: block; height: 88px; }
-    .mobile-bar {
-      display: flex; position: fixed; left:0; right:0; bottom:0; z-index:60;
-      background:rgba(255,255,255,0.97); backdrop-filter:blur(8px); border-top:1px solid #E2E7EC;
-      padding:10px 16px calc(10px + env(safe-area-inset-bottom)); flex-direction:column; gap:6px; align-items:center;
-    }
+  @media (prefers-reduced-motion: reduce){
+    *{ animation-duration:.01ms !important; animation-iteration-count:1 !important; transition-duration:.01ms !important; scroll-behavior:auto !important; }
+  }
+
+  .wrap{ max-width:var(--maxw); margin:0 auto; padding:0 24px; }
+  .section{ padding:96px 0; }
+  @media (max-width:720px){ .section{ padding:64px 0; } }
+
+  .eyebrow{ font-size:14px; font-weight:600; color:var(--primary); margin-bottom:14px; }
+
+  [data-reveal]{ opacity:0; transform:translateY(18px); transition:opacity .55s ease, transform .55s ease; }
+  [data-reveal].is-visible{ opacity:1; transform:translateY(0); }
+
+  .icon{ width:20px; height:20px; stroke-width:1.75; }
+
+  /* ===== Botões ===== */
+  .btn{
+    display:inline-flex; align-items:center; justify-content:center; gap:8px;
+    padding:13px 22px; border-radius:8px; font-weight:600; font-size:15px;
+    border:1px solid transparent; cursor:pointer; white-space:nowrap;
+    transition:background-color .15s ease, border-color .15s ease, color .15s ease, transform .15s ease;
+  }
+  .btn:hover{ transform:translateY(-1px); }
+  .btn-primary{ background:var(--primary); color:#fff; }
+  .btn-primary:hover{ background:var(--primary-hover); }
+  .btn-outline{ background:transparent; color:var(--primary); border-color:var(--primary); }
+  .btn-outline:hover{ background:rgba(37,99,235,0.06); }
+  .btn-white{ background:#fff; color:var(--primary); }
+  .btn-white:hover{ background:#f1f5f9; }
+  .btn-sm{ padding:10px 18px; font-size:14px; }
+
+  /* ===== Header ===== */
+  .site-header{
+    position:sticky; top:0; z-index:50;
+    background:var(--brand-dark);
+  }
+  .site-header .bar{ display:flex; align-items:center; justify-content:space-between; padding:14px 0; }
+  .brand{ display:flex; align-items:center; color:#fff; }
+  .brand img{ height:38px; width:auto; }
+  .nav-links{ display:flex; align-items:center; gap:30px; }
+  .nav-links a{ color:rgba(255,255,255,0.82); font-size:14.5px; font-weight:500; }
+  .nav-links a:hover{ color:#fff; }
+  .header-right{ display:flex; align-items:center; gap:18px; }
+  .hamburger{
+    display:none; background:none; border:none; color:#fff; cursor:pointer; padding:6px;
+  }
+  .mobile-menu{
+    display:none; flex-direction:column; gap:4px;
+    background:var(--brand-dark);
+    padding:8px 24px 18px;
+  }
+  .mobile-menu.open{ display:flex; }
+  .mobile-menu a{ color:rgba(255,255,255,0.85); font-size:15px; padding:10px 0; border-top:1px solid rgba(255,255,255,0.08); }
+
+  @media (max-width:860px){
+    .nav-links{ display:none; }
+    .hamburger{ display:inline-flex; }
+  }
+
+  /* ===== Hero ===== */
+  .hero{ background:var(--background); border-bottom:1px solid var(--border); }
+  .hero .wrap{ padding-top:76px; padding-bottom:76px; }
+  .hero-grid{ display:grid; grid-template-columns:1.05fr 0.95fr; gap:56px; align-items:center; }
+  @media (max-width:940px){ .hero-grid{ grid-template-columns:1fr; gap:44px; } }
+  .hero h1{ font-size:clamp(32px,4.4vw,50px); }
+  .hero-sub{ margin-top:20px; font-size:18px; color:var(--muted-foreground); max-width:540px; line-height:1.6; }
+  .hero-ctas{ margin-top:32px; display:flex; flex-wrap:wrap; gap:14px; }
+  .hero-micro{ margin-top:14px; font-size:13px; color:var(--muted-foreground); }
+
+  /* ===== Vote panel mock (hero visual) ===== */
+  .panel-shell{
+    background:var(--card);
+    border:1px solid var(--border);
+    border-radius:var(--radius-lg);
+    box-shadow:var(--shadow-md);
+    overflow:hidden;
+  }
+  .panel-topbar{
+    display:flex; align-items:center; gap:10px;
+    padding:14px 18px; background:var(--muted);
+    border-bottom:1px solid var(--border);
+  }
+  .live-dot{ width:8px; height:8px; border-radius:50%; background:var(--success); position:relative; }
+  .live-dot::after{
+    content:""; position:absolute; inset:-4px; border-radius:50%;
+    border:1px solid var(--success); opacity:.5;
+  }
+  .panel-topbar .label{ font-size:12.5px; color:var(--muted-foreground); font-weight:500; }
+  .panel-body{ padding:6px 8px; }
+  .vote-row{
+    display:flex; align-items:center; justify-content:space-between; gap:12px;
+    padding:12px 12px; opacity:0; animation:rowIn .5s ease forwards;
+  }
+  .vote-row + .vote-row{ border-top:1px solid var(--muted); }
+  .vote-row:nth-child(1){ animation-delay:.15s; }
+  .vote-row:nth-child(2){ animation-delay:.32s; }
+  .vote-row:nth-child(3){ animation-delay:.49s; }
+  .vote-row:nth-child(4){ animation-delay:.66s; }
+  .vote-row:nth-child(5){ animation-delay:.83s; }
+  .vote-row:nth-child(6){ animation-delay:1.0s; }
+  @keyframes rowIn{ from{ opacity:0; transform:translateY(4px);} to{ opacity:1; transform:translateY(0);} }
+  .voter-name{ font-size:14px; font-weight:600; color:var(--foreground); }
+  .voter-party{ font-size:12px; color:var(--muted-foreground); }
+  .vote-chip{
+    display:inline-flex; align-items:center; gap:6px; font-size:12.5px; font-weight:600;
+    padding:5px 11px; border-radius:999px;
+  }
+  .vote-chip .dot2{ width:6px; height:6px; border-radius:50%; }
+  .chip-sim{ background:rgba(37,99,235,0.09); color:var(--primary); }
+  .chip-sim .dot2{ background:var(--primary); }
+  .chip-nao{ background:rgba(239,68,68,0.09); color:var(--destructive); }
+  .chip-nao .dot2{ background:var(--destructive); }
+  .chip-abs{ background:rgba(100,116,139,0.12); color:var(--muted-foreground); }
+  .chip-abs .dot2{ background:var(--muted-foreground); }
+  .panel-footer{
+    display:flex; align-items:center; justify-content:space-between;
+    padding:14px 18px; background:var(--muted); border-top:1px solid var(--border);
+  }
+  .quorum{ font-size:13px; color:var(--muted-foreground); }
+  .quorum b{ color:var(--foreground); }
+  .result-badge{
+    font-size:12.5px; font-weight:700; color:#fff; background:var(--success);
+    padding:6px 13px; border-radius:999px;
+  }
+  .panel-caption{ margin-top:12px; font-size:12.5px; color:var(--muted-foreground); text-align:center; }
+
+  /* ===== Faixa de status honesto ===== */
+  .status-banner{ background:var(--muted); border-bottom:1px solid var(--border); }
+  .status-banner .wrap{ padding:20px 24px; display:flex; flex-wrap:wrap; align-items:center; gap:10px 24px; }
+  .status-dot{ width:8px; height:8px; border-radius:50%; background:var(--success); flex-shrink:0; }
+  .status-text{ font-size:14.5px; color:var(--muted-foreground); }
+  .status-text b{ color:var(--foreground); font-weight:600; }
+
+  /* ===== Funcionalidades ===== */
+  .funcionalidades{ background:var(--card); }
+  .section-head{ max-width:600px; }
+  .section-head h2{ font-size:clamp(26px,3vw,34px); }
+  .section-head p{ margin-top:14px; font-size:16.5px; color:var(--muted-foreground); }
+
+  .feat-grid{ margin-top:48px; display:grid; grid-template-columns:repeat(3,1fr); gap:22px; }
+  @media (max-width:860px){ .feat-grid{ grid-template-columns:1fr 1fr; } }
+  @media (max-width:600px){ .feat-grid{ grid-template-columns:1fr; } }
+  .feat-card{
+    border:1px solid var(--border); border-radius:var(--radius);
+    padding:26px 24px; background:var(--card); box-shadow:var(--shadow-sm);
+  }
+  .feat-icon{
+    width:42px; height:42px; border-radius:9px; background:var(--muted);
+    display:flex; align-items:center; justify-content:center; color:var(--primary);
+    margin-bottom:16px;
+  }
+  .feat-card h3{ font-size:16.5px; font-weight:700; }
+  .feat-card p{ margin-top:8px; font-size:14.5px; color:var(--muted-foreground); line-height:1.55; }
+
+  /* ===== Processo / timeline ===== */
+  .processo{ background:var(--muted); }
+  .timeline{
+    margin-top:48px; display:grid; grid-template-columns:repeat(8,1fr); gap:0;
+    position:relative;
+  }
+  @media (max-width:900px){
+    .timeline{ grid-auto-flow:column; grid-auto-columns:150px; grid-template-columns:none; overflow-x:auto; padding-bottom:8px; }
+  }
+  .tl-step{ padding:0 14px 0 0; position:relative; }
+  .tl-connector{
+    height:2px; background:var(--border); position:absolute; top:19px; left:38px; right:-14px;
+  }
+  .tl-step:last-child .tl-connector{ display:none; }
+  .tl-num{
+    width:38px; height:38px; border-radius:50%; background:var(--primary); color:#fff;
+    display:flex; align-items:center; justify-content:center; font-weight:700; font-size:15px;
+    position:relative; z-index:1;
+  }
+  .tl-label{ margin-top:14px; font-size:13.5px; font-weight:600; color:var(--foreground); line-height:1.35; }
+
+  /* ===== Benefícios ===== */
+  .beneficios{ background:var(--card); }
+  .ben-cols{ margin-top:48px; display:grid; grid-template-columns:1fr 1fr; gap:24px; }
+  @media (max-width:780px){ .ben-cols{ grid-template-columns:1fr; } }
+  .ben-col{ border-radius:var(--radius-lg); padding:34px 30px; }
+  .ben-col.light{ background:var(--muted); }
+  .ben-col.dark{ background:var(--brand-dark); color:#fff; }
+  .ben-col-head{ display:flex; align-items:center; gap:12px; margin-bottom:22px; }
+  .ben-col-icon{
+    width:38px; height:38px; border-radius:9px; display:flex; align-items:center; justify-content:center;
+  }
+  .ben-col.light .ben-col-icon{ background:#fff; color:var(--primary); }
+  .ben-col.dark .ben-col-icon{ background:rgba(255,255,255,0.12); color:#fff; }
+  .ben-col h3{ font-size:18px; font-weight:700; }
+  .ben-col.dark h3{ color:#fff; }
+  .ben-list{ list-style:none; margin:0; padding:0; display:grid; gap:14px; }
+  .ben-list li{ display:flex; gap:10px; font-size:15px; line-height:1.5; }
+  .ben-list li .icon{ flex-shrink:0; margin-top:2px; width:16px; height:16px; }
+  .ben-col.light li{ color:var(--foreground); }
+  .ben-col.light li .icon{ color:var(--primary); }
+  .ben-col.dark li{ color:rgba(255,255,255,0.9); }
+  .ben-col.dark li .icon{ color:#fff; }
+
+  /* ===== Segurança (dark) ===== */
+  .seguranca{ background:var(--brand-darker); }
+  .seguranca .section-head h2, .seguranca .section-head p{ color:#fff; }
+  .seguranca .section-head p{ color:var(--text-on-dark-muted); }
+  .sec-grid{ margin-top:48px; display:grid; grid-template-columns:repeat(4,1fr); gap:18px; }
+  @media (max-width:900px){ .sec-grid{ grid-template-columns:1fr 1fr; } }
+  @media (max-width:560px){ .sec-grid{ grid-template-columns:1fr; } }
+  .sec-card{ background:var(--card-on-dark); border-radius:var(--radius); padding:24px 22px; }
+  .sec-card .feat-icon{ background:rgba(255,255,255,0.08); color:#fff; }
+  .sec-card h3{ color:#fff; font-size:15.5px; font-weight:700; }
+  .sec-card p{ margin-top:8px; font-size:14px; color:var(--text-on-dark-muted); line-height:1.55; }
+
+  /* ===== Oferta ===== */
+  .oferta{ background:var(--muted); }
+  .oferta-doc{
+    margin-top:40px; max-width:760px; background:var(--card);
+    border:1px solid var(--border); border-left:4px solid var(--primary);
+    border-radius:var(--radius-lg); padding:34px 34px 28px; box-shadow:var(--shadow-sm);
+  }
+  .oferta-list{ list-style:none; margin:0; padding:0; display:grid; gap:12px; }
+  .oferta-list li{ display:flex; gap:10px; font-size:15px; color:var(--foreground); }
+  .oferta-list li .icon{ color:var(--primary); flex-shrink:0; }
+  .oferta-terms{ margin-top:24px; padding-top:22px; border-top:1px solid var(--border); display:grid; gap:8px; }
+  .oferta-terms .row{ display:flex; justify-content:space-between; gap:16px; font-size:14.5px; }
+  .oferta-terms .row span:first-child{ color:var(--muted-foreground); }
+  .oferta-terms .row span:last-child{ color:var(--foreground); font-weight:600; text-align:right; }
+  .oferta-doc .btn{ margin-top:24px; }
+
+  /* ===== Objeções ===== */
+  .objecoes{ background:var(--card); }
+  .obj-list{ margin-top:36px; display:grid; gap:26px; max-width:760px; }
+  .obj-item .q{ font-size:16px; font-weight:700; color:var(--foreground); }
+  .obj-item .a{ margin-top:7px; font-size:15px; color:var(--muted-foreground); line-height:1.6; }
+
+  /* ===== Garantia ===== */
+  .garantia{ background:var(--muted); }
+  .garantia-box{
+    max-width:680px; border:1px dashed var(--border); border-radius:var(--radius);
+    padding:26px 28px; background:var(--card);
+  }
+  .garantia-box h3{ font-size:16px; font-weight:700; }
+  .garantia-box p{ margin-top:10px; font-size:14.5px; color:var(--muted-foreground); line-height:1.6; }
+
+  /* ===== FAQ ===== */
+  .faq{ background:var(--card); }
+  .faq-list{ margin-top:36px; max-width:800px; }
+  details{ border-top:1px solid var(--border); padding:18px 0; }
+  .faq-list details:last-child{ border-bottom:1px solid var(--border); }
+  summary{
+    cursor:pointer; list-style:none; display:flex; align-items:center; justify-content:space-between; gap:16px;
+    font-size:15.5px; font-weight:600; color:var(--foreground);
+  }
+  summary::-webkit-details-marker{ display:none; }
+  summary .plus{
+    flex-shrink:0; width:24px; height:24px; border-radius:50%; border:1px solid var(--border);
+    display:flex; align-items:center; justify-content:center; color:var(--muted-foreground);
+    transition:transform .2s ease, border-color .2s ease, color .2s ease;
+  }
+  details[open] summary .plus{ transform:rotate(45deg); border-color:var(--primary); color:var(--primary); }
+  details p{ margin-top:14px; font-size:14.5px; color:var(--muted-foreground); max-width:680px; line-height:1.6; }
+
+  /* ===== CTA final ===== */
+  .cta-final{ background:var(--primary); }
+  .cta-final .wrap{ max-width:640px; text-align:left; }
+  .cta-final h2{ color:#fff; font-size:clamp(28px,3.6vw,38px); }
+  .cta-final p{ margin-top:14px; font-size:17px; color:rgba(255,255,255,0.88); }
+  .cta-final .hero-ctas{ margin-top:28px; }
+  .cta-final .hero-micro{ color:rgba(255,255,255,0.75); }
+
+  /* ===== Footer ===== */
+  .site-footer{ background:var(--brand-darker); padding:56px 0 32px; }
+  .ps{
+    max-width:760px; padding:20px 22px; border-left:3px solid var(--primary);
+    background:rgba(255,255,255,0.03); font-size:14.5px; color:var(--text-on-dark-muted); line-height:1.6;
+  }
+  .ps b{ color:#fff; font-weight:700; }
+  .footer-main{
+    margin-top:44px; display:flex; flex-wrap:wrap; justify-content:space-between; gap:32px;
+    padding-top:36px; border-top:1px solid rgba(255,255,255,0.08);
+  }
+  .footer-brand{ display:flex; align-items:center; color:#fff; }
+  .footer-brand img{ height:34px; width:auto; }
+  .footer-desc{ margin-top:10px; font-size:13.5px; color:var(--text-on-dark-muted); max-width:280px; }
+  .footer-links{ display:flex; flex-wrap:wrap; gap:22px; }
+  .footer-links a{ font-size:13.5px; color:var(--text-on-dark-muted); }
+  .footer-links a:hover{ color:#fff; }
+  .footer-bottom{
+    margin-top:32px; padding-top:20px; border-top:1px solid rgba(255,255,255,0.08);
+    font-size:12.5px; color:rgba(148,163,184,0.7);
   }
 </style>
 </head>
 <body>
-<div style="width:100%; overflow-x:hidden">
 
-<header style="position:sticky; top:0; z-index:50; background:rgba(255,255,255,0.94); backdrop-filter:blur(8px); border-bottom:1px solid #E2E7EC">
-  <div style="max-width:1180px; margin:0 auto; padding:10px clamp(16px,5vw,24px); display:flex; align-items:center; justify-content:space-between; gap:16px">
-    <img src="assets/spl-logo-horizontal.svg" alt="SPL — Sistema de Processo Legislativo" style="height:clamp(34px,7vw,42px); width:auto; display:block" />
-    <nav class="nav-desktop">
-      <a href="#processo" style="font-size:14px; color:#566270; font-weight:500">O processo</a>
-      <a href="#beneficios" style="font-size:14px; color:#566270; font-weight:500">Benefícios</a>
-      <a href="#incluso" style="font-size:14px; color:#566270; font-weight:500">O que está incluso</a>
-      <a href="#faq" style="font-size:14px; color:#566270; font-weight:500">Dúvidas</a>
-      <a href="#" class="cta-header whatsapp-link" target="_blank" rel="noopener" style="display:inline-flex; align-items:center; gap:8px; background:#1D4065; color:#FFFFFF; font-size:14px; font-weight:500; padding:11px 18px; border-radius:6px; min-height:44px; box-sizing:border-box">Falar com um especialista</a>
+<header class="site-header">
+  <div class="wrap bar">
+    <a href="#hero" class="brand"><img src="assets/spl-simbolo-branco.svg" alt="SPL: Sistema de Processo Legislativo" /></a>
+    <nav class="nav-links">
+      <a href="#funcionalidades">Funcionalidades</a>
+      <a href="#processo">Processo</a>
+      <a href="#beneficios">Benefícios</a>
+      <a href="#seguranca">Segurança</a>
+      <a href="#faq">FAQ</a>
     </nav>
-    <a href="#" class="nav-mobile-cta whatsapp-link" target="_blank" rel="noopener" style="align-items:center; justify-content:center; background:#1D4065; color:#FFFFFF; font-size:14.5px; font-weight:500; padding:0 18px; border-radius:6px; min-height:44px; flex:none">WhatsApp</a>
+    <div class="header-right">
+      <a href="#" class="btn btn-primary btn-sm whatsapp-link" target="_blank" rel="noopener">Falar com um especialista</a>
+      <button class="hamburger" id="hamburgerBtn" aria-label="Abrir menu" aria-expanded="false">
+        <i data-lucide="menu" class="icon"></i>
+      </button>
+    </div>
+  </div>
+  <div class="mobile-menu" id="mobileMenu">
+    <a href="#funcionalidades">Funcionalidades</a>
+    <a href="#processo">Processo</a>
+    <a href="#beneficios">Benefícios</a>
+    <a href="#seguranca">Segurança</a>
+    <a href="#faq">FAQ</a>
   </div>
 </header>
 
-<section style="background:linear-gradient(180deg,#F4F8FB 0%,#FFFFFF 100%); border-bottom:1px solid #E2E7EC">
-  <div style="max-width:1180px; margin:0 auto; padding:clamp(32px,7vw,72px) clamp(18px,5vw,24px) clamp(48px,8vw,84px); display:grid; grid-template-columns:repeat(auto-fit,minmax(min(100%,420px),1fr)); gap:clamp(32px,5vw,56px); align-items:center">
+<section class="hero" id="hero">
+  <div class="wrap hero-grid">
     <div>
-      <div style="display:inline-flex; align-items:center; gap:10px; border:1px solid #CBDCEB; background:#FFFFFF; color:#27547F; font-size:12.5px; font-weight:500; letter-spacing:0.06em; text-transform:uppercase; padding:7px 14px; border-radius:999px; margin-bottom:28px">Para Câmaras Municipais de 9 a 23 vereadores</div>
-
-      <h1 style="font-size:clamp(30px,6.2vw,56px); line-height:1.08; letter-spacing:-0.025em; font-weight:600; margin:0 0 22px; color:#0B1B2B">Nenhuma lei da sua Câmara cai por vício de forma.</h1>
-      <p style="font-family:'Source Serif 4',Georgia,serif; font-size:clamp(18px,2.6vw,21px); line-height:1.5; color:#2C3A46; margin:0 0 30px; max-width:37ch">Quórum, prazo e iniciativa verificados automaticamente — do protocolo à publicação.</p>
-
-      <p style="font-size:16.5px; line-height:1.6; color:#566270; margin:0 0 36px; max-width:54ch">O SPL é a plataforma que conduz o processo legislativo completo da sua Câmara — protocolo, comissões, sessões plenárias, votações e sanção do prefeito — com o rigor de um processo formal, mesmo em câmaras sem assessoria jurídica própria.</p>
-
-      <div style="display:flex; flex-direction:column; gap:14px; align-items:flex-start">
-        <a href="#" class="hero-cta whatsapp-link" target="_blank" rel="noopener" style="display:inline-flex; align-items:center; justify-content:center; text-align:center; gap:10px; background:#1D4065; color:#FFFFFF; font-size:17px; font-weight:500; padding:17px 28px; border-radius:7px; box-shadow:0 1px 2px rgba(11,27,43,0.18); width:100%; max-width:400px; min-height:56px; box-sizing:border-box">Falar com um especialista no WhatsApp</a>
-        <p style="font-size:14px; line-height:1.55; color:#566270; margin:0; max-width:46ch">Conversa de 15 minutos, sem custo e sem compromisso. Vamos entender o Regimento Interno da sua Câmara antes de qualquer coisa.</p>
+      <h1>Nenhuma lei da sua Câmara cai por vício de forma.</h1>
+      <p class="hero-sub">O SPL conduz o processo legislativo inteiro, do rascunho à publicação no Diário Oficial. Quórum, prazo e iniciativa verificados automaticamente, mesmo sem assessoria jurídica própria.</p>
+      <div class="hero-ctas">
+        <a href="#" class="btn btn-primary whatsapp-link" target="_blank" rel="noopener">Falar com um especialista</a>
+        <a href="#processo" class="btn btn-outline">Conhecer o sistema</a>
       </div>
+      <p class="hero-micro">Conversa de 15 minutos, sem custo e sem compromisso.</p>
     </div>
 
     <div>
-      <div style="border:1px solid #CBDCEB; border-radius:10px; background:#FFFFFF; padding:12px; box-shadow:0 18px 40px -24px rgba(11,27,43,0.35)">
-        <div id="carousel-touch" style="position:relative; overflow:hidden; border-radius:6px; background:#F4F8FB; touch-action:pan-y">
-          <div id="carousel-track" style="display:flex; width:300%; transition:transform 480ms cubic-bezier(0.22,0.61,0.36,1); transform:translateX(0%)">
-            <div style="width:33.3333%; flex:none">
-              <img src="assets/spl-painel.png" alt="Painel da sessão ao vivo com foto, partido e voto de cada vereador" style="display:block; width:100%; aspect-ratio:16/10; object-fit:contain; background:#F4F8FB" />
-            </div>
-            <div style="width:33.3333%; flex:none">
-              <img src="assets/spl-voto.png" alt="Tela de votação do vereador com voto registrado" style="display:block; width:100%; aspect-ratio:16/10; object-fit:contain; background:#F4F8FB" />
-            </div>
-            <div style="width:33.3333%; flex:none">
-              <img src="assets/spl-tela-vereador.png" alt="Tela do vereador na ordem do dia, com pedido de palavra" style="display:block; width:100%; aspect-ratio:16/10; object-fit:contain; background:#F4F8FB" />
-            </div>
+      <div class="panel-shell" aria-hidden="true">
+        <div class="panel-topbar">
+          <span class="live-dot"></span>
+          <span class="label">Sessão Ordinária · Item 3 · PL 042/2026</span>
+        </div>
+        <div class="panel-body">
+          <div class="vote-row">
+            <div><div class="voter-name">Ver. A. Souza</div><div class="voter-party">PSD</div></div>
+            <span class="vote-chip chip-sim"><span class="dot2"></span>Sim</span>
           </div>
-          <button type="button" id="carousel-prev" class="carousel-btn" aria-label="Imagem anterior" style="position:absolute; left:10px; top:50%; transform:translateY(-50%); width:44px; height:44px; border:1px solid #CBDCEB; border-radius:999px; background:rgba(255,255,255,0.92); color:#1D4065; font-size:18px; line-height:1; cursor:pointer; display:flex; align-items:center; justify-content:center">‹</button>
-          <button type="button" id="carousel-next" class="carousel-btn" aria-label="Próxima imagem" style="position:absolute; right:10px; top:50%; transform:translateY(-50%); width:44px; height:44px; border:1px solid #CBDCEB; border-radius:999px; background:rgba(255,255,255,0.92); color:#1D4065; font-size:18px; line-height:1; cursor:pointer; display:flex; align-items:center; justify-content:center">›</button>
+          <div class="vote-row">
+            <div><div class="voter-name">Ver. C. Lima</div><div class="voter-party">PT</div></div>
+            <span class="vote-chip chip-sim"><span class="dot2"></span>Sim</span>
+          </div>
+          <div class="vote-row">
+            <div><div class="voter-name">Ver. R. Alves</div><div class="voter-party">MDB</div></div>
+            <span class="vote-chip chip-nao"><span class="dot2"></span>Não</span>
+          </div>
+          <div class="vote-row">
+            <div><div class="voter-name">Ver. M. Farias</div><div class="voter-party">PP</div></div>
+            <span class="vote-chip chip-sim"><span class="dot2"></span>Sim</span>
+          </div>
+          <div class="vote-row">
+            <div><div class="voter-name">Ver. T. Nunes</div><div class="voter-party">PDT</div></div>
+            <span class="vote-chip chip-abs"><span class="dot2"></span>Abst.</span>
+          </div>
+          <div class="vote-row">
+            <div><div class="voter-name">Ver. B. Rocha</div><div class="voter-party">PSD</div></div>
+            <span class="vote-chip chip-sim"><span class="dot2"></span>Sim</span>
+          </div>
+        </div>
+        <div class="panel-footer">
+          <span class="quorum">Quórum <b>14/17</b></span>
+          <span class="result-badge">Aprovado</span>
         </div>
       </div>
-      <div style="display:flex; flex-wrap:wrap; align-items:center; justify-content:space-between; gap:12px 20px; margin-top:14px; padding:0 4px">
-        <p id="carousel-caption" style="margin:0; font-size:14.5px; line-height:1.5; color:#566270">Painel da sessão: foto, partido e voto de cada vereador em tempo real.</p>
-        <div style="display:flex; gap:8px; flex:none">
-          <button type="button" class="carousel-dot" data-index="0" aria-label="Painel da sessão" style="width:28px; height:28px; padding:0; border:none; background:none; cursor:pointer; display:flex; align-items:center; justify-content:center"><span class="dot" style="display:block; width:9px; height:9px; border-radius:999px; background:#1D4065"></span></button>
-          <button type="button" class="carousel-dot" data-index="1" aria-label="Tela de votação" style="width:28px; height:28px; padding:0; border:none; background:none; cursor:pointer; display:flex; align-items:center; justify-content:center"><span class="dot" style="display:block; width:9px; height:9px; border-radius:999px; background:#C3CAD1"></span></button>
-          <button type="button" class="carousel-dot" data-index="2" aria-label="Tela do vereador" style="width:28px; height:28px; padding:0; border:none; background:none; cursor:pointer; display:flex; align-items:center; justify-content:center"><span class="dot" style="display:block; width:9px; height:9px; border-radius:999px; background:#C3CAD1"></span></button>
+      <p class="panel-caption">Ilustração do painel de votação ao vivo do SPL</p>
+    </div>
+  </div>
+</section>
+
+<section class="status-banner">
+  <div class="wrap">
+    <span class="status-dot"></span>
+    <span class="status-text"><b>Construído com rigor jurídico:</b> cada etapa do processo legislativo segue o Regimento Interno da sua Câmara, sem exceção.</span>
+  </div>
+</section>
+
+<section class="funcionalidades section" id="funcionalidades">
+  <div class="wrap">
+    <div class="section-head" data-reveal>
+      <h2>Tudo que sua Câmara precisa em uma única plataforma</h2>
+      <p>Não é um sistema de sessão com telão. É o processo legislativo inteiro, de ponta a ponta.</p>
+    </div>
+    <div class="feat-grid">
+      <div class="feat-card" data-reveal>
+        <div class="feat-icon"><i data-lucide="file-text" class="icon"></i></div>
+        <h3>Gestão de Proposições</h3>
+        <p>Elabore, protocole e acompanhe proposições com controle total de versões e histórico imutável.</p>
+      </div>
+      <div class="feat-card" data-reveal>
+        <div class="feat-icon"><i data-lucide="git-branch" class="icon"></i></div>
+        <h3>Tramitação Legislativa</h3>
+        <p>Motor de estados que garante que cada etapa seja executada por quem tem autorização, nas condições certas.</p>
+      </div>
+      <div class="feat-card" data-reveal>
+        <div class="feat-icon"><i data-lucide="users" class="icon"></i></div>
+        <h3>Gestão de Comissões</h3>
+        <p>Distribua proposições, designe relatores e registre pareceres com rastreabilidade completa.</p>
+      </div>
+      <div class="feat-card" data-reveal>
+        <div class="feat-icon"><i data-lucide="vote" class="icon"></i></div>
+        <h3>Registro de Votações</h3>
+        <p>Votações nominais, simbólicas e secretas com verificação automática de quórum e imutabilidade total.</p>
+      </div>
+      <div class="feat-card" data-reveal>
+        <div class="feat-icon"><i data-lucide="globe" class="icon"></i></div>
+        <h3>Portal de Transparência</h3>
+        <p>Cumpra a LAI com um portal público, com proposições, votações e histórico acessíveis a qualquer cidadão.</p>
+      </div>
+      <div class="feat-card" data-reveal>
+        <div class="feat-icon"><i data-lucide="shield" class="icon"></i></div>
+        <h3>Segurança e LGPD</h3>
+        <p>Dados protegidos, trilha de auditoria imutável e conformidade com a LGPD e a Lei de Acesso à Informação.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="processo section" id="processo">
+  <div class="wrap">
+    <div class="section-head" data-reveal>
+      <h2>Do rascunho à publicação, com rastreabilidade em cada etapa</h2>
+      <p>O sistema não deixa uma etapa ser pulada, e verifica o quórum sozinho antes de qualquer votação abrir.</p>
+    </div>
+    <div class="timeline" data-reveal>
+      <div class="tl-step"><div class="tl-connector"></div><div class="tl-num">1</div><div class="tl-label">Rascunho</div></div>
+      <div class="tl-step"><div class="tl-connector"></div><div class="tl-num">2</div><div class="tl-label">Protocolo</div></div>
+      <div class="tl-step"><div class="tl-connector"></div><div class="tl-num">3</div><div class="tl-label">Verificação jurídica ou checklist</div></div>
+      <div class="tl-step"><div class="tl-connector"></div><div class="tl-num">4</div><div class="tl-label">Comissões</div></div>
+      <div class="tl-step"><div class="tl-connector"></div><div class="tl-num">5</div><div class="tl-label">Pauta</div></div>
+      <div class="tl-step"><div class="tl-connector"></div><div class="tl-num">6</div><div class="tl-label">Votação</div></div>
+      <div class="tl-step"><div class="tl-connector"></div><div class="tl-num">7</div><div class="tl-label">Sanção</div></div>
+      <div class="tl-step"><div class="tl-num">8</div><div class="tl-label">Publicação</div></div>
+    </div>
+  </div>
+</section>
+
+<section class="beneficios section" id="beneficios">
+  <div class="wrap">
+    <div class="section-head" data-reveal>
+      <h2>Feito para quem opera o processo legislativo todos os dias</h2>
+    </div>
+    <div class="ben-cols">
+      <div class="ben-col light" data-reveal>
+        <div class="ben-col-head">
+          <span class="ben-col-icon"><i data-lucide="user-check" class="icon"></i></span>
+          <h3>Para Vereadores</h3>
         </div>
+        <ul class="ben-list">
+          <li><i data-lucide="check" class="icon"></i>Proponha e acompanhe suas proposições</li>
+          <li><i data-lucide="check" class="icon"></i>Vote com segurança e transparência</li>
+          <li><i data-lucide="check" class="icon"></i>Acesse o histórico completo do seu mandato</li>
+          <li><i data-lucide="check" class="icon"></i>Receba alertas de prazos e votações</li>
+        </ul>
       </div>
-    </div>
-  </div>
-</section>
-
-<section style="background:#0B1B2B; color:#FFFFFF">
-  <div style="max-width:1180px; margin:0 auto; padding:clamp(52px,9vw,88px) clamp(18px,5vw,24px)">
-    <div style="max-width:70ch">
-      <h2 style="font-size:clamp(24px,4.4vw,36px); line-height:1.2; letter-spacing:-0.02em; font-weight:600; margin:0 0 28px; color:#FFFFFF">O risco não está na sessão. Está nos 30 dias em que a proposição fica esquecida numa comissão.</h2>
-      <div style="font-family:'Source Serif 4',Georgia,serif; font-size:18.5px; line-height:1.65; color:#CBDCEB; display:flex; flex-direction:column; gap:20px">
-        <p style="margin:0">A maioria dos sistemas vendidos hoje pra câmaras municipais resolve um problema pequeno bem resolvido: a sessão com votação em telão. Bonito, rende foto, rende matéria no jornal local. Mas é só um momento do processo — e o processo inteiro continua na planilha, no papel, na memória do Secretário Legislativo.</p>
-        <p style="margin:0">No parecer que ninguém sabe se foi emitido. No quórum que alguém “achou” que estava correto. É aí que nasce o vício de forma que derruba uma lei meses ou anos depois.</p>
-        <p style="margin:0; color:#FFFFFF">O SPL foi construído pra cobrir esse processo inteiro — não só o momento de votação. Sessão ao vivo com painéis é um módulo do sistema, não o sistema todo. O motor de tramitação não deixa uma etapa ser pulada, verifica quórum antes de qualquer votação abrir, e funciona mesmo se a sua Câmara não tem advogado próprio.</p>
-      </div>
-    </div>
-
-    <div style="margin-top:56px; display:grid; grid-template-columns:repeat(auto-fit,minmax(260px,1fr)); gap:24px">
-      <div style="border:1px solid #27547F; border-radius:8px; padding:clamp(20px,5vw,26px); background:#122B44">
-        <div style="font-size:12px; font-weight:500; letter-spacing:0.08em; text-transform:uppercase; color:#74A2C9; margin-bottom:14px">O que o mercado vende</div>
-        <p style="margin:0; font-size:16px; line-height:1.6; color:#A3C2DC">Um momento: a sessão. Votação, painel, telão. O antes (protocolo, comissões, pareceres, prazos) e o depois (sanção, publicação) continuam manuais.</p>
-      </div>
-      <div style="border:1px solid #33699B; border-radius:8px; padding:clamp(20px,5vw,26px); background:#122B44">
-        <div style="font-size:12px; font-weight:500; letter-spacing:0.08em; text-transform:uppercase; color:#74A2C9; margin-bottom:14px">O que o SPL cobre</div>
-        <p style="margin:0; font-size:16px; line-height:1.6; color:#FFFFFF">O processo inteiro, do primeiro rascunho até a publicação no Diário Oficial — com log imutável de cada ato e a sessão ao vivo como um dos módulos.</p>
-      </div>
-      <div style="border:1px solid #1F7A5C; border-radius:8px; padding:clamp(20px,5vw,26px); background:#122B44">
-        <div style="font-size:12px; font-weight:500; letter-spacing:0.08em; text-transform:uppercase; color:#74A2C9; margin-bottom:14px">O que sua Câmara ganha</div>
-        <p style="margin:0; font-size:16px; line-height:1.6; color:#FFFFFF">O que hoje só as grandes têm: processo rastreável de ponta a ponta — e continua aparecendo bem na sessão, pra imprensa e pra população.</p>
-      </div>
-    </div>
-  </div>
-</section>
-
-<section style="background:#FFFFFF">
-  <div style="max-width:1180px; margin:0 auto; padding:clamp(52px,9vw,88px) clamp(18px,5vw,24px); display:grid; grid-template-columns:repeat(auto-fit,minmax(min(100%,400px),1fr)); gap:clamp(28px,5vw,56px)">
-    <div>
-      <div style="font-size:12.5px; font-weight:500; letter-spacing:0.08em; text-transform:uppercase; color:#A83232; margin-bottom:16px">Se você é Secretário Legislativo</div>
-      <h2 style="font-size:clamp(24px,4.4vw,34px); line-height:1.18; letter-spacing:-0.02em; font-weight:600; margin:0 0 20px; color:#0B1B2B">Provavelmente já viveu isso.</h2>
-      <p style="font-size:16.5px; line-height:1.6; color:#566270; margin:0">Nenhuma dessas situações é falha sua. É a ausência de um processo que segure isso por você.</p>
-    </div>
-    <div style="display:flex; flex-direction:column; border-top:1px solid #E2E7EC">
-      <div style="display:flex; gap:18px; padding:20px 4px; border-bottom:1px solid #E2E7EC; align-items:flex-start">
-        <span style="font-family:ui-monospace,SFMono-Regular,Menlo,monospace; font-size:13px; color:#A3C2DC; padding-top:3px">01</span>
-        <p style="margin:0; font-size:17px; line-height:1.55; color:#0F1720">Já se pegou tentando lembrar em qual comissão está parado um projeto de dois anos atrás?</p>
-      </div>
-      <div style="display:flex; gap:18px; padding:20px 4px; border-bottom:1px solid #E2E7EC; align-items:flex-start">
-        <span style="font-family:ui-monospace,SFMono-Regular,Menlo,monospace; font-size:13px; color:#A3C2DC; padding-top:3px">02</span>
-        <p style="margin:0; font-size:17px; line-height:1.55; color:#0F1720">Já teve que explicar pro Presidente, sob pressão, onde exatamente uma proposição travou — sem ter certeza da resposta?</p>
-      </div>
-      <div style="display:flex; gap:18px; padding:20px 4px; border-bottom:1px solid #E2E7EC; align-items:flex-start">
-        <span style="font-family:ui-monospace,SFMono-Regular,Menlo,monospace; font-size:13px; color:#A3C2DC; padding-top:3px">03</span>
-        <p style="margin:0; font-size:17px; line-height:1.55; color:#0F1720">Já abriu uma votação e só depois percebeu que o quórum não batia?</p>
-      </div>
-      <div style="display:flex; gap:18px; padding:20px 4px; border-bottom:1px solid #E2E7EC; align-items:flex-start">
-        <span style="font-family:ui-monospace,SFMono-Regular,Menlo,monospace; font-size:13px; color:#A3C2DC; padding-top:3px">04</span>
-        <p style="margin:0; font-size:17px; line-height:1.55; color:#0F1720">Já sentiu que, se você sair de férias ou adoecer, ninguém mais sabe operar o processo do jeito certo?</p>
-      </div>
-      <div style="display:flex; gap:18px; padding:20px 4px; border-bottom:1px solid #E2E7EC; align-items:flex-start">
-        <span style="font-family:ui-monospace,SFMono-Regular,Menlo,monospace; font-size:13px; color:#A3C2DC; padding-top:3px">05</span>
-        <p style="margin:0; font-size:17px; line-height:1.55; color:#0F1720">Já viu a imprensa ou um cidadão pedir uma informação amparada pela LAI que devia estar pública — e não estava?</p>
-      </div>
-      <div style="display:flex; gap:18px; padding:20px 4px; border-bottom:1px solid #E2E7EC; align-items:flex-start">
-        <span style="font-family:ui-monospace,SFMono-Regular,Menlo,monospace; font-size:13px; color:#A3C2DC; padding-top:3px">06</span>
-        <p style="margin:0; font-size:17px; line-height:1.55; color:#0F1720">Já ficou com medo de que uma lei aprovada seja contestada depois por um erro de forma que ninguém percebeu na hora?</p>
-      </div>
-    </div>
-  </div>
-</section>
-
-<section id="processo" style="background:#F4F6F8; border-top:1px solid #E2E7EC; border-bottom:1px solid #E2E7EC">
-  <div style="max-width:1180px; margin:0 auto; padding:clamp(52px,9vw,88px) clamp(18px,5vw,24px)">
-    <div style="max-width:62ch; margin-bottom:48px">
-      <div style="font-size:12.5px; font-weight:500; letter-spacing:0.08em; text-transform:uppercase; color:#27547F; margin-bottom:16px">A solução</div>
-      <h2 style="font-size:clamp(25px,4.6vw,38px); line-height:1.15; letter-spacing:-0.022em; font-weight:600; margin:0 0 22px; color:#0B1B2B">O SPL não é um sistema de votação com telão bonito. É um motor de processo.</h2>
-      <p style="font-family:'Source Serif 4',Georgia,serif; font-size:18.5px; line-height:1.6; color:#2C3A46; margin:0">Cada proposição passa por um fluxo de estados controlado — e o sistema não deixa uma etapa ser pulada.</p>
-    </div>
-
-    <div style="display:flex; flex-wrap:wrap; gap:10px; align-items:center; margin-bottom:44px">
-      <span style="background:#FFFFFF; border:1px solid #CBDCEB; color:#1D4065; font-size:14px; font-weight:500; padding:10px 14px; border-radius:6px">Elaboração</span>
-      <span style="color:#A3C2DC; font-size:15px">→</span>
-      <span style="background:#FFFFFF; border:1px solid #CBDCEB; color:#1D4065; font-size:14px; font-weight:500; padding:10px 14px; border-radius:6px">Protocolo</span>
-      <span style="color:#A3C2DC; font-size:15px">→</span>
-      <span style="background:#FFFFFF; border:1px solid #CBDCEB; color:#1D4065; font-size:14px; font-weight:500; padding:10px 14px; border-radius:6px">Verificação jurídica ou checklist formal</span>
-      <span style="color:#A3C2DC; font-size:15px">→</span>
-      <span style="background:#FFFFFF; border:1px solid #CBDCEB; color:#1D4065; font-size:14px; font-weight:500; padding:10px 14px; border-radius:6px">Comissões</span>
-      <span style="color:#A3C2DC; font-size:15px">→</span>
-      <span style="background:#FFFFFF; border:1px solid #CBDCEB; color:#1D4065; font-size:14px; font-weight:500; padding:10px 14px; border-radius:6px">Pauta</span>
-      <span style="color:#A3C2DC; font-size:15px">→</span>
-      <span style="background:#FFFFFF; border:1px solid #CBDCEB; color:#1D4065; font-size:14px; font-weight:500; padding:10px 14px; border-radius:6px">Discussão</span>
-      <span style="color:#A3C2DC; font-size:15px">→</span>
-      <span style="background:#1D4065; border:1px solid #1D4065; color:#FFFFFF; font-size:14px; font-weight:500; padding:10px 14px; border-radius:6px">Votação em sessão ao vivo</span>
-      <span style="color:#A3C2DC; font-size:15px">→</span>
-      <span style="background:#FFFFFF; border:1px solid #CBDCEB; color:#1D4065; font-size:14px; font-weight:500; padding:10px 14px; border-radius:6px">Redação final</span>
-      <span style="color:#A3C2DC; font-size:15px">→</span>
-      <span style="background:#FFFFFF; border:1px solid #CBDCEB; color:#1D4065; font-size:14px; font-weight:500; padding:10px 14px; border-radius:6px">Sanção do prefeito</span>
-      <span style="color:#A3C2DC; font-size:15px">→</span>
-      <span style="background:#FFFFFF; border:1px solid #CBDCEB; color:#1D4065; font-size:14px; font-weight:500; padding:10px 14px; border-radius:6px">Publicação</span>
-      <span style="font-family:ui-monospace,SFMono-Regular,Menlo,monospace; font-size:12.5px; color:#566270; padding-left:6px">13+ estados mapeados</span>
-    </div>
-
-    <div style="display:grid; grid-template-columns:repeat(auto-fit,minmax(280px,1fr)); gap:1px; background:#E2E7EC; border:1px solid #E2E7EC; border-radius:8px; overflow:hidden">
-      <div style="background:#FFFFFF; padding:clamp(22px,5vw,30px)">
-        <h3 style="font-size:18px; font-weight:600; margin:0 0 12px; color:#0B1B2B; letter-spacing:-0.01em">Quórum verificado antes de abrir</h3>
-        <p style="margin:0; font-size:15.5px; line-height:1.6; color:#566270">Antes de qualquer votação abrir, o sistema verifica sozinho se o quórum está presente. Ninguém mais “acha” que estava correto.</p>
-      </div>
-      <div style="background:#FFFFFF; padding:clamp(22px,5vw,30px)">
-        <h3 style="font-size:18px; font-weight:600; margin:0 0 12px; color:#0B1B2B; letter-spacing:-0.01em">Nada pode ser editado depois</h3>
-        <p style="margin:0; font-size:15.5px; line-height:1.6; color:#566270">Toda ação fica registrada com autor, data e hora — e nada, nem voto nem parecer, pode ser alterado depois de registrado.</p>
-      </div>
-      <div style="background:#FFFFFF; padding:clamp(22px,5vw,30px)">
-        <h3 style="font-size:18px; font-weight:600; margin:0 0 12px; color:#0B1B2B; letter-spacing:-0.01em">Funciona sem advogado próprio</h3>
-        <p style="margin:0; font-size:15.5px; line-height:1.6; color:#566270">Sem assessoria jurídica (realidade da maioria), o Secretário preenche uma checklist formal de conformidade — que também fica registrada, protegendo a Câmara.</p>
-      </div>
-    </div>
-
-    <p style="max-width:70ch; margin:44px 0 0; font-size:16.5px; line-height:1.65; color:#566270">E sim: a sessão ao vivo, com check-in por tablet, quórum calculado automaticamente e dois telões acompanhando votação em tempo real, também está aqui. Mas ela é a ponta visível de um processo que está seguro por trás — <strong style="color:#0F1720; font-weight:600">não o produto inteiro</strong>.</p>
-  </div>
-</section>
-
-<section id="beneficios" style="background:#FFFFFF">
-  <div style="max-width:1180px; margin:0 auto; padding:clamp(52px,9vw,88px) clamp(18px,5vw,24px)">
-    <h2 style="font-size:clamp(25px,4.6vw,38px); line-height:1.15; letter-spacing:-0.022em; font-weight:600; margin:0 0 48px; color:#0B1B2B; max-width:44ch">O que muda na rotina da sua Câmara</h2>
-    <div style="display:grid; grid-template-columns:repeat(auto-fit,minmax(300px,1fr)); gap:36px 48px">
-      <div>
-        <h3 style="font-size:18.5px; font-weight:600; margin:0 0 10px; color:#1D4065; letter-spacing:-0.01em">Nenhuma lei cai por erro de forma</h3>
-        <p style="margin:0; font-size:16px; line-height:1.6; color:#566270">O sistema não permite que uma etapa obrigatória seja pulada, então o risco jurídico que mais preocupa Presidente e Advogado da Câmara deixa de depender da memória de alguém.</p>
-      </div>
-      <div>
-        <h3 style="font-size:18.5px; font-weight:600; margin:0 0 10px; color:#1D4065; letter-spacing:-0.01em">Você nunca mais fica sem resposta</h3>
-        <p style="margin:0; font-size:16px; line-height:1.6; color:#566270">Qualquer proposição, de qualquer época, tem histórico completo e rastreável. Ninguém mais pergunta “onde está isso” sem você saber responder na hora.</p>
-      </div>
-      <div>
-        <h3 style="font-size:18.5px; font-weight:600; margin:0 0 10px; color:#1D4065; letter-spacing:-0.01em">Segurança mesmo sem advogado na Câmara</h3>
-        <p style="margin:0; font-size:16px; line-height:1.6; color:#566270">A checklist formal de conformidade documenta que a admissão foi feita com todo o cuidado possível, protegendo a Câmara mesmo na ausência de assessoria jurídica própria.</p>
-      </div>
-      <div>
-        <h3 style="font-size:18.5px; font-weight:600; margin:0 0 10px; color:#1D4065; letter-spacing:-0.01em">Voto registrado nunca muda</h3>
-        <p style="margin:0; font-size:16px; line-height:1.6; color:#566270">Nem você, nem o Administrador do sistema conseguem alterar um voto depois de encerrado. Isso tira qualquer contestação de credibilidade da mesa.</p>
-      </div>
-      <div>
-        <h3 style="font-size:18.5px; font-weight:600; margin:0 0 10px; color:#1D4065; letter-spacing:-0.01em">A LAI para de ser um peso</h3>
-        <p style="margin:0; font-size:16px; line-height:1.6; color:#566270">O portal público se alimenta sozinho do processo. Você não precisa lembrar de atualizar nada pra cumprir a lei de transparência.</p>
-      </div>
-      <div>
-        <h3 style="font-size:18.5px; font-weight:600; margin:0 0 10px; color:#1D4065; letter-spacing:-0.01em">A Câmara aparece bem</h3>
-        <p style="margin:0; font-size:16px; line-height:1.6; color:#566270">Painéis com foto, partido e voto de cada vereador em tempo real. É o momento que rende matéria local e deixa o Presidente orgulhoso de mostrar.</p>
-      </div>
-      <div>
-        <h3 style="font-size:18.5px; font-weight:600; margin:0 0 10px; color:#1D4065; letter-spacing:-0.01em">Menos dependência de uma única pessoa</h3>
-        <p style="margin:0; font-size:16px; line-height:1.6; color:#566270">Hoje, se o Secretário falta, o processo trava. Com o SPL, o processo continua registrado e visível pra qualquer um assumir.</p>
-      </div>
-      <div>
-        <h3 style="font-size:18.5px; font-weight:600; margin:0 0 10px; color:#1D4065; letter-spacing:-0.01em">Feito pro seu Regimento, não pro de ninguém</h3>
-        <p style="margin:0; font-size:16px; line-height:1.6; color:#566270">Quóruns, prazos e tipos de proposição são configurados conforme a Lei Orgânica e o Regimento Interno da sua Câmara, não um padrão genérico.</p>
-      </div>
-    </div>
-  </div>
-</section>
-
-<section style="background:#F4F8FB; border-top:1px solid #E2E7EC; border-bottom:1px solid #E2E7EC">
-  <div style="max-width:1180px; margin:0 auto; padding:clamp(52px,9vw,88px) clamp(18px,5vw,24px)">
-    <div style="max-width:62ch; margin-bottom:40px">
-      <div style="font-size:12.5px; font-weight:500; letter-spacing:0.08em; text-transform:uppercase; color:#27547F; margin-bottom:16px">Onde estamos hoje</div>
-      <h2 style="font-size:clamp(23px,4.2vw,32px); line-height:1.2; letter-spacing:-0.02em; font-weight:600; margin:0 0 20px; color:#0B1B2B">Somos honestos com você: o SPL está entrando em operação agora.</h2>
-      <p style="font-family:'Source Serif 4',Georgia,serif; font-size:18.5px; line-height:1.6; color:#2C3A46; margin:0">Nossa primeira Câmara parceira inicia a implantação em 15 dias. Isso significa uma coisa boa pra quem fechar cedo: acompanhamento direto e próximo do time, sem fila de suporte genérico.</p>
-    </div>
-    <div style="display:grid; grid-template-columns:repeat(auto-fit,minmax(280px,1fr)); gap:20px">
-      <div style="border:1.5px dashed #A3C2DC; border-radius:8px; padding:24px; background:rgba(255,255,255,0.6)">
-        <div style="font-family:ui-monospace,SFMono-Regular,Menlo,monospace; font-size:11.5px; letter-spacing:0.06em; color:#27547F; margin-bottom:10px">A INSERIR — AUTORIDADE</div>
-        <p style="margin:0; font-size:14.5px; line-height:1.6; color:#566270">Nome e cargo do responsável técnico ou fundador do SPL + credencial que sustente autoridade no tema (experiência com câmaras municipais, formação jurídica, parceria institucional).</p>
-      </div>
-      <div style="border:1.5px dashed #A3C2DC; border-radius:8px; padding:24px; background:rgba(255,255,255,0.6)">
-        <div style="font-family:ui-monospace,SFMono-Regular,Menlo,monospace; font-size:11.5px; letter-spacing:0.06em; color:#27547F; margin-bottom:10px">RESERVADO — DEPOIMENTO</div>
-        <p style="margin:0; font-size:14.5px; line-height:1.6; color:#566270">Depoimento da primeira Câmara implantada, capturado após 30–60 dias de uso, com foco em resultado concreto: dias reduzidos na tramitação, fim da dúvida sobre quórum.</p>
-      </div>
-    </div>
-  </div>
-</section>
-
-<section id="incluso" style="background:#FFFFFF">
-  <div style="max-width:1180px; margin:0 auto; padding:clamp(52px,9vw,88px) clamp(18px,5vw,24px); display:grid; grid-template-columns:repeat(auto-fit,minmax(min(100%,400px),1fr)); gap:clamp(32px,5vw,56px); align-items:start">
-    <div>
-      <h2 style="font-size:clamp(24px,4.4vw,34px); line-height:1.18; letter-spacing:-0.02em; font-weight:600; margin:0 0 20px; color:#0B1B2B">Tudo que está incluso</h2>
-      <p style="font-size:16.5px; line-height:1.65; color:#566270; margin:0 0 28px">Cada Câmara tem Regimento, número de vereadores e realidade diferentes. Por isso as condições são apresentadas na conversa — não numa tabela genérica.</p>
-      <a href="#" class="incluso-cta whatsapp-link" target="_blank" rel="noopener" style="display:inline-flex; align-items:center; justify-content:center; text-align:center; gap:10px; background:#1D4065; color:#FFFFFF; font-size:16px; font-weight:500; padding:16px 24px; border-radius:7px; width:100%; max-width:400px; min-height:54px; box-sizing:border-box">Saber as condições para a minha Câmara</a>
-    </div>
-    <div style="border:1px solid #E2E7EC; border-radius:10px; overflow:hidden">
-      <div style="display:flex; flex-direction:column">
-        <div style="display:flex; gap:14px; padding:16px clamp(16px,4vw,26px); border-bottom:1px solid #E2E7EC; align-items:flex-start"><span style="color:#1F7A5C; font-size:16px; line-height:1.5">✓</span><p style="margin:0; font-size:16px; line-height:1.5; color:#0F1720">Motor completo de tramitação — 13+ estados mapeados, do rascunho à publicação</p></div>
-        <div style="display:flex; gap:14px; padding:16px clamp(16px,4vw,26px); border-bottom:1px solid #E2E7EC; align-items:flex-start"><span style="color:#1F7A5C; font-size:16px; line-height:1.5">✓</span><p style="margin:0; font-size:16px; line-height:1.5; color:#0F1720">Verificação de quórum automática antes de qualquer votação</p></div>
-        <div style="display:flex; gap:14px; padding:16px clamp(16px,4vw,26px); border-bottom:1px solid #E2E7EC; align-items:flex-start"><span style="color:#1F7A5C; font-size:16px; line-height:1.5">✓</span><p style="margin:0; font-size:16px; line-height:1.5; color:#0F1720">Modo de operação com ou sem assessoria jurídica própria</p></div>
-        <div style="display:flex; gap:14px; padding:16px clamp(16px,4vw,26px); border-bottom:1px solid #E2E7EC; align-items:flex-start"><span style="color:#1F7A5C; font-size:16px; line-height:1.5">✓</span><p style="margin:0; font-size:16px; line-height:1.5; color:#0F1720">Portal público de transparência (LAI) alimentado automaticamente</p></div>
-        <div style="display:flex; gap:14px; padding:16px clamp(16px,4vw,26px); border-bottom:1px solid #E2E7EC; align-items:flex-start"><span style="color:#1F7A5C; font-size:16px; line-height:1.5">✓</span><p style="margin:0; font-size:16px; line-height:1.5; color:#0F1720">Sessão ao vivo com check-in por tablet e painéis em tempo real</p></div>
-        <div style="display:flex; gap:14px; padding:16px clamp(16px,4vw,26px); border-bottom:1px solid #E2E7EC; align-items:flex-start"><span style="color:#1F7A5C; font-size:16px; line-height:1.5">✓</span><p style="margin:0; font-size:16px; line-height:1.5; color:#0F1720">Configuração completa conforme o Regimento Interno da sua Câmara</p></div>
-        <div style="display:flex; gap:14px; padding:16px clamp(16px,4vw,26px); border-bottom:1px solid #E2E7EC; align-items:flex-start"><span style="color:#1F7A5C; font-size:16px; line-height:1.5">✓</span><p style="margin:0; font-size:16px; line-height:1.5; color:#0F1720">Log de auditoria imutável de todo o processo</p></div>
-      </div>
-      <div style="background:#F4F6F8; padding:22px clamp(16px,4vw,26px); display:grid; grid-template-columns:repeat(auto-fit,minmax(180px,1fr)); gap:20px">
-        <div>
-          <div style="font-size:12px; font-weight:500; letter-spacing:0.07em; text-transform:uppercase; color:#566270; margin-bottom:6px">Modelo</div>
-          <p style="margin:0; font-size:15.5px; color:#0F1720; line-height:1.5">Contrato anual</p>
+      <div class="ben-col dark" data-reveal>
+        <div class="ben-col-head">
+          <span class="ben-col-icon"><i data-lucide="briefcase" class="icon"></i></span>
+          <h3>Para Servidores</h3>
         </div>
-        <div>
-          <div style="font-size:12px; font-weight:500; letter-spacing:0.07em; text-transform:uppercase; color:#566270; margin-bottom:6px">Implantação</div>
-          <p style="margin:0; font-size:15.5px; color:#0F1720; line-height:1.5">Investimento à parte, sob consulta</p>
-        </div>
-        <div>
-          <div style="font-size:12px; font-weight:500; letter-spacing:0.07em; text-transform:uppercase; color:#566270; margin-bottom:6px">Condições exatas</div>
-          <p style="margin:0; font-size:15.5px; color:#0F1720; line-height:1.5">Personalizadas conforme número de vereadores e regimento — apresentadas na conversa</p>
-        </div>
+        <ul class="ben-list">
+          <li><i data-lucide="check" class="icon"></i>Elimine planilhas e controles manuais</li>
+          <li><i data-lucide="check" class="icon"></i>Gerencie prazos com alertas automáticos</li>
+          <li><i data-lucide="check" class="icon"></i>Produza atas a partir dos eventos já registrados</li>
+          <li><i data-lucide="check" class="icon"></i>Tenha trilha de auditoria completa</li>
+        </ul>
       </div>
     </div>
   </div>
 </section>
 
-<section style="background:#F4F6F8; border-top:1px solid #E2E7EC; border-bottom:1px solid #E2E7EC">
-  <div style="max-width:1180px; margin:0 auto; padding:clamp(52px,9vw,88px) clamp(18px,5vw,24px)">
-    <h2 style="font-size:clamp(24px,4.4vw,34px); line-height:1.18; letter-spacing:-0.02em; font-weight:600; margin:0 0 44px; color:#0B1B2B">O que costumam nos dizer</h2>
-    <div style="display:grid; grid-template-columns:repeat(auto-fit,minmax(300px,1fr)); gap:24px">
-      <div style="background:#FFFFFF; border:1px solid #E2E7EC; border-radius:10px; padding:clamp(22px,5vw,30px)">
-        <p style="font-family:'Source Serif 4',Georgia,serif; font-size:19px; line-height:1.4; color:#0B1B2B; margin:0 0 16px; font-style:italic">“Não temos verba pra isso.”</p>
-        <p style="margin:0; font-size:15.5px; line-height:1.6; color:#566270">Entendemos — orçamento de Câmara pequena é apertado. Por isso as condições são conversadas caso a caso, considerando o tamanho da sua Câmara. Antes de decidir que não cabe, vale entender o que cabe.</p>
-      </div>
-      <div style="background:#FFFFFF; border:1px solid #E2E7EC; border-radius:10px; padding:clamp(22px,5vw,30px)">
-        <p style="font-family:'Source Serif 4',Georgia,serif; font-size:19px; line-height:1.4; color:#0B1B2B; margin:0 0 16px; font-style:italic">“Nosso Regimento Interno é muito diferente do padrão.”</p>
-        <p style="margin:0; font-size:15.5px; line-height:1.6; color:#566270">Na verdade é o contrário do problema: o SPL foi desenhado justamente porque cada Câmara tem um Regimento diferente. Quóruns, prazos e tipos de proposição são configurados pro seu Regimento — não o seu Regimento que se adapta a um sistema genérico.</p>
-      </div>
-      <div style="background:#FFFFFF; border:1px solid #E2E7EC; border-radius:10px; padding:clamp(22px,5vw,30px)">
-        <p style="font-family:'Source Serif 4',Georgia,serif; font-size:19px; line-height:1.4; color:#0B1B2B; margin:0 0 16px; font-style:italic">“Já usamos um sistema de câmara.”</p>
-        <p style="margin:0; font-size:15.5px; line-height:1.6; color:#566270">A maioria dos sistemas do mercado resolve só a sessão — votação, painel, telão. O que acontece antes (protocolo, comissões, pareceres, prazos) e depois (sanção, publicação) continua manual. O SPL não compete com sistema de sessão: ele cobre o processo inteiro.</p>
-      </div>
+<section class="seguranca section" id="seguranca">
+  <div class="wrap">
+    <div class="section-head" data-reveal>
+      <h2>Segurança e conformidade que o setor público exige</h2>
+      <p>A imutabilidade de votos, pareceres e resultados não é um recurso: é a base do sistema.</p>
     </div>
-
-    <div style="margin-top:24px; border:1.5px dashed #A3C2DC; border-radius:10px; padding:28px; background:rgba(255,255,255,0.6); max-width:70ch">
-      <div style="font-family:ui-monospace,SFMono-Regular,Menlo,monospace; font-size:11.5px; letter-spacing:0.06em; color:#27547F; margin-bottom:10px">BLOCO A DEFINIR — GARANTIA</div>
-      <p style="margin:0; font-size:15.5px; line-height:1.65; color:#566270">Direção sugerida: em venda institucional, a garantia que mais converte é reversão de risco de implantação — um período inicial de acompanhamento em que, se o sistema não se adequar ao Regimento da Câmara, o contrato pode ser encerrado sem multa. Fechada a condição, este bloco recebe o texto definitivo.</p>
-    </div>
-
-    <p style="margin:32px 0 0; max-width:66ch; font-size:16px; line-height:1.65; color:#566270; padding-left:18px; border-left:3px solid #B8862B">Estamos com as primeiras Câmaras parceiras entrando em implantação. Cada uma recebe acompanhamento direto do time — por isso não atendemos um número ilimitado ao mesmo tempo.</p>
-  </div>
-</section>
-
-<section id="faq" style="background:#FFFFFF">
-  <div style="max-width:1180px; margin:0 auto; padding:clamp(52px,9vw,88px) clamp(18px,5vw,24px); display:grid; grid-template-columns:repeat(auto-fit,minmax(min(100%,400px),1fr)); gap:clamp(24px,4vw,56px); align-items:start">
-    <h2 style="font-size:clamp(24px,4.4vw,34px); line-height:1.18; letter-spacing:-0.02em; font-weight:600; margin:0; color:#0B1B2B">Perguntas frequentes</h2>
-    <div style="display:flex; flex-direction:column; border-top:1px solid #E2E7EC">
-      <details style="border-bottom:1px solid #E2E7EC">
-        <summary style="cursor:pointer; display:flex; justify-content:space-between; gap:20px; padding:22px 4px; font-size:17.5px; font-weight:500; color:#0B1B2B; min-height:44px; align-items:center"><span>Serve pra Câmara pequena, com poucos servidores?</span><span style="color:#A3C2DC; font-size:20px; line-height:1">+</span></summary>
-        <p style="margin:0; padding:0 4px 24px; font-size:16px; line-height:1.65; color:#566270; max-width:66ch">Sim — o SPL foi pensado justamente pra esse perfil. Ele foi desenhado pra câmaras de 9 a 23 vereadores, com equipe enxuta, onde o Secretário Legislativo costuma acumular quase tudo sozinho.</p>
-      </details>
-      <details style="border-bottom:1px solid #E2E7EC">
-        <summary style="cursor:pointer; display:flex; justify-content:space-between; gap:20px; padding:22px 4px; font-size:17.5px; font-weight:500; color:#0B1B2B; min-height:44px; align-items:center"><span>Funciona sem termos assessoria jurídica própria?</span><span style="color:#A3C2DC; font-size:20px; line-height:1">+</span></summary>
-        <p style="margin:0; padding:0 4px 24px; font-size:16px; line-height:1.65; color:#566270; max-width:66ch">Sim. Quando não há Assessor Jurídico, o Secretário Legislativo preenche uma checklist formal de conformidade, que fica registrada e documentada — o processo continua seguro e rastreável.</p>
-      </details>
-      <details style="border-bottom:1px solid #E2E7EC">
-        <summary style="cursor:pointer; display:flex; justify-content:space-between; gap:20px; padding:22px 4px; font-size:17.5px; font-weight:500; color:#0B1B2B; min-height:44px; align-items:center"><span>E se o sistema não se adaptar ao nosso Regimento Interno?</span><span style="color:#A3C2DC; font-size:20px; line-height:1">+</span></summary>
-        <p style="margin:0; padding:0 4px 24px; font-size:16px; line-height:1.65; color:#566270; max-width:66ch">O SPL é configurável — quóruns, prazos e tipos de proposição são parametrizados conforme a Lei Orgânica e o Regimento da sua Câmara. Na conversa inicial, mapeamos isso antes de qualquer contrato.</p>
-      </details>
-      <details style="border-bottom:1px solid #E2E7EC">
-        <summary style="cursor:pointer; display:flex; justify-content:space-between; gap:20px; padding:22px 4px; font-size:17.5px; font-weight:500; color:#0B1B2B; min-height:44px; align-items:center"><span>Dá pra testar antes de fechar?</span><span style="color:#A3C2DC; font-size:20px; line-height:1">+</span></summary>
-        <p style="margin:0; padding:0 4px 24px; font-size:16px; line-height:1.65; color:#566270; max-width:66ch">O SPL não é um sistema de “teste grátis” solto — ele acompanha o processo real da Câmara todos os dias e normalmente exige alguma customização de regimento. Por isso, o caminho é uma conversa de diagnóstico, onde mostramos o sistema funcionando com a realidade da sua Câmara antes de qualquer decisão.</p>
-      </details>
-      <details style="border-bottom:1px solid #E2E7EC">
-        <summary style="cursor:pointer; display:flex; justify-content:space-between; gap:20px; padding:22px 4px; font-size:17.5px; font-weight:500; color:#0B1B2B; min-height:44px; align-items:center"><span>Quanto tempo leva a implantação?</span><span style="color:#A3C2DC; font-size:20px; line-height:1">+</span></summary>
-        <p style="margin:0; padding:0 4px 24px; font-family:ui-monospace,SFMono-Regular,Menlo,monospace; font-size:14px; line-height:1.65; color:#27547F; max-width:66ch">[INSERIR PRAZO MÉDIO — depende da complexidade do Regimento Interno e ficará mais preciso depois da primeira implantação real, em andamento agora]</p>
-      </details>
-      <details style="border-bottom:1px solid #E2E7EC">
-        <summary style="cursor:pointer; display:flex; justify-content:space-between; gap:20px; padding:22px 4px; font-size:17.5px; font-weight:500; color:#0B1B2B; min-height:44px; align-items:center"><span>Como funciona o suporte depois da implantação?</span><span style="color:#A3C2DC; font-size:20px; line-height:1">+</span></summary>
-        <p style="margin:0; padding:0 4px 24px; font-family:ui-monospace,SFMono-Regular,Menlo,monospace; font-size:14px; line-height:1.65; color:#27547F; max-width:66ch">[INSERIR — modelo de suporte: canal, horário de atendimento, se há SLA]</p>
-      </details>
-      <details style="border-bottom:1px solid #E2E7EC">
-        <summary style="cursor:pointer; display:flex; justify-content:space-between; gap:20px; padding:22px 4px; font-size:17.5px; font-weight:500; color:#0B1B2B; min-height:44px; align-items:center"><span>Quais formas de pagamento vocês aceitam?</span><span style="color:#A3C2DC; font-size:20px; line-height:1">+</span></summary>
-        <p style="margin:0; padding:0 4px 24px; font-family:ui-monospace,SFMono-Regular,Menlo,monospace; font-size:14px; line-height:1.65; color:#27547F; max-width:66ch">[INSERIR CONDIÇÕES DE PAGAMENTO DO CONTRATO ANUAL]</p>
-      </details>
+    <div class="sec-grid">
+      <div class="sec-card" data-reveal>
+        <div class="feat-icon"><i data-lucide="lock" class="icon"></i></div>
+        <h3>Imutabilidade de registros</h3>
+        <p>Votos, pareceres e resultados não podem ser alterados após o registro. Nunca, nem pelo Administrador.</p>
+      </div>
+      <div class="sec-card" data-reveal>
+        <div class="feat-icon"><i data-lucide="shield" class="icon"></i></div>
+        <h3>Conformidade LGPD</h3>
+        <p>Tratamento de dados pessoais com finalidade explícita e minimização dos dados coletados.</p>
+      </div>
+      <div class="sec-card" data-reveal>
+        <div class="feat-icon"><i data-lucide="database" class="icon"></i></div>
+        <h3>Backup automático</h3>
+        <p>Backup diário com retenção de 365 dias e verificação de integridade dos registros.</p>
+      </div>
+      <div class="sec-card" data-reveal>
+        <div class="feat-icon"><i data-lucide="eye" class="icon"></i></div>
+        <h3>Trilha de auditoria</h3>
+        <p>Todo ato registrado com autor, data e hora. Nenhuma operação é anônima.</p>
+      </div>
     </div>
   </div>
 </section>
 
-<section style="background:#1D4065; color:#FFFFFF">
-  <div style="max-width:1180px; margin:0 auto; padding:clamp(56px,9vw,92px) clamp(18px,5vw,24px); display:flex; flex-direction:column; align-items:flex-start; gap:clamp(20px,3vw,26px)">
-    <h2 style="font-size:clamp(26px,4.8vw,40px); line-height:1.15; letter-spacing:-0.022em; font-weight:600; margin:0; color:#FFFFFF; max-width:48ch">Toda semana sem rastreabilidade é uma semana em que uma lei da sua Câmara está exposta a um vício de forma que ninguém vai perceber até ser tarde demais.</h2>
-    <p style="font-family:'Source Serif 4',Georgia,serif; font-size:19px; line-height:1.55; color:#CBDCEB; margin:0; max-width:56ch">Você não precisa resolver isso sozinho, com planilha e boa vontade.</p>
-    <a href="#" class="final-cta whatsapp-link" target="_blank" rel="noopener" style="display:inline-flex; align-items:center; justify-content:center; text-align:center; gap:10px; background:#FFFFFF; color:#1D4065; font-size:17px; font-weight:600; padding:18px 30px; border-radius:7px; margin-top:6px; width:100%; max-width:400px; min-height:56px; box-sizing:border-box">Quero falar com um especialista</a>
-    <p style="font-size:14.5px; line-height:1.55; color:#A3C2DC; margin:0; max-width:52ch">Sem custo, sem compromisso. Vamos entender o Regimento da sua Câmara e mostrar exatamente como o SPL se encaixa nele.</p>
+<section class="oferta section" id="incluso">
+  <div class="wrap">
+    <div class="section-head" data-reveal>
+      <h2>O que está incluso</h2>
+    </div>
+    <div class="oferta-doc" data-reveal>
+      <ul class="oferta-list">
+        <li><i data-lucide="check-circle-2" class="icon"></i>Motor completo de tramitação, do rascunho à publicação</li>
+        <li><i data-lucide="check-circle-2" class="icon"></i>Verificação de quórum automática antes de qualquer votação</li>
+        <li><i data-lucide="check-circle-2" class="icon"></i>Modo de operação com ou sem assessoria jurídica própria</li>
+        <li><i data-lucide="check-circle-2" class="icon"></i>Portal público de transparência (LAI) alimentado automaticamente</li>
+        <li><i data-lucide="check-circle-2" class="icon"></i>Sessão ao vivo com check-in por tablet e painéis em tempo real</li>
+        <li><i data-lucide="check-circle-2" class="icon"></i>Configuração completa conforme o Regimento Interno da sua Câmara</li>
+        <li><i data-lucide="check-circle-2" class="icon"></i>Log de auditoria imutável de todo o processo</li>
+      </ul>
+      <div class="oferta-terms">
+        <div class="row"><span>Modelo</span><span>Contrato anual</span></div>
+        <div class="row"><span>Implantação</span><span>Investimento à parte, sob consulta</span></div>
+        <div class="row"><span>Condições</span><span>Personalizadas conforme número de vereadores e regimento</span></div>
+      </div>
+      <a href="#" class="btn btn-primary btn-sm whatsapp-link" target="_blank" rel="noopener">Pedir condições pra minha Câmara</a>
+    </div>
   </div>
 </section>
 
-<footer style="background:#0B1B2B; color:#C3CAD1">
-  <div style="max-width:1180px; margin:0 auto; padding:clamp(44px,8vw,64px) clamp(18px,5vw,24px) clamp(32px,6vw,48px)">
-    <div style="max-width:78ch; border-left:3px solid #33699B; padding-left:22px; margin-bottom:56px">
-      <p style="margin:0; font-size:16.5px; line-height:1.7; color:#CBDCEB"><strong style="color:#FFFFFF; font-weight:600">P.S.</strong> — O SPL não é mais um sistema de sessão com telão bonito. É o processo legislativo inteiro da sua Câmara, rastreável do rascunho à publicação, protegido contra vício de forma — com ou sem assessoria jurídica própria. A sessão ao vivo com painéis continua aqui, e vai continuar rendendo boa foto e boa matéria. Mas o que protege a sua Câmara de verdade acontece nos bastidores, todos os dias. Fale com a gente antes de decidir sozinho.</p>
+<section class="objecoes section">
+  <div class="wrap">
+    <div class="section-head" data-reveal>
+      <h2>Perguntas antes de decidir</h2>
     </div>
-    <div style="display:flex; flex-wrap:wrap; gap:24px; align-items:center; justify-content:space-between; border-top:1px solid #122B44; padding-top:28px">
-      <img src="assets/spl-simbolo-branco.svg" alt="SPL — Sistema de Processo Legislativo" style="height:46px; width:auto; display:block" />
-      <a href="#" class="footer-cta whatsapp-link" target="_blank" rel="noopener" style="font-size:14.5px; color:#A3C2DC; border-bottom:1px solid #27547F; padding-bottom:2px">Falar com um especialista no WhatsApp</a>
+    <div class="obj-list">
+      <div class="obj-item" data-reveal>
+        <p class="q">"Não temos verba pra isso."</p>
+        <p class="a">Orçamento de Câmara pequena é apertado, e sabemos disso. As condições são conversadas caso a caso, considerando o tamanho da sua Câmara. Antes de decidir que não cabe, vale entender o que cabe.</p>
+      </div>
+      <div class="obj-item" data-reveal>
+        <p class="q">"Nosso Regimento Interno é muito diferente do padrão."</p>
+        <p class="a">É o contrário do problema: o SPL existe justamente porque cada Câmara tem um Regimento diferente. Quóruns, prazos e tipos de proposição são configurados pro seu Regimento, não o seu Regimento se adaptando a um sistema genérico.</p>
+      </div>
+      <div class="obj-item" data-reveal>
+        <p class="q">"Já usamos um sistema de câmara."</p>
+        <p class="a">A maioria dos sistemas do mercado resolve só a sessão: votação, painel, telão. É uma parte pequena do processo. O que acontece antes (protocolo, comissões, pareceres) e depois (sanção, publicação) costuma continuar manual. O SPL cobre o processo inteiro; a sessão ao vivo é só um dos módulos.</p>
+      </div>
     </div>
+  </div>
+</section>
+
+<section class="garantia section">
+  <div class="wrap">
+    <div class="section-head" data-reveal>
+      <h2>Garantia</h2>
+    </div>
+    <div class="garantia-box" data-reveal>
+      <h3>Compromisso com a sua Câmara</h3>
+      <p>Garantimos que o SPL se adapta ao Regimento Interno da sua Câmara. Se algo não se encaixar, ajustamos junto com você: o processo da sua Câmara não muda pra caber no sistema.</p>
+    </div>
+  </div>
+</section>
+
+<section class="faq section" id="faq">
+  <div class="wrap">
+    <div class="section-head" data-reveal>
+      <h2>Perguntas frequentes</h2>
+    </div>
+    <div class="faq-list" data-reveal>
+      <details>
+        <summary>O sistema funciona pra Câmaras pequenas, sem equipe de TI? <span class="plus">+</span></summary>
+        <p>Sim. O SPL é oferecido como SaaS, não requer instalação nem infraestrutura local, e foi pensado pra câmaras de 9 a 23 vereadores, com equipe enxuta.</p>
+      </details>
+      <details>
+        <summary>Como funciona a verificação jurídica sem Assessor próprio? <span class="plus">+</span></summary>
+        <p>O sistema opera em três modos: com assessor próprio, com checklist formal pelo Secretário Legislativo, ou com assessoria externa por demanda. Cada Câmara configura conforme sua realidade.</p>
+      </details>
+      <details>
+        <summary>Os dados ficam seguros? Onde são armazenados? <span class="plus">+</span></summary>
+        <p>Em infraestrutura em nuvem, com criptografia em trânsito e em repouso, backup diário e retenção de 365 dias.</p>
+      </details>
+      <details>
+        <summary>O sistema atende às exigências da LAI e da LGPD? <span class="plus">+</span></summary>
+        <p>Sim. O portal de transparência cumpre as obrigações da Lei de Acesso à Informação, e o tratamento de dados segue a LGPD.</p>
+      </details>
+      <details>
+        <summary>Quanto tempo leva pra implantar? <span class="plus">+</span></summary>
+        <p>Depende da complexidade do Regimento Interno da sua Câmara. Vamos ter um prazo médio mais preciso assim que a primeira implantação, em andamento agora, estiver concluída.</p>
+      </details>
+      <details>
+        <summary>Dá pra testar antes de fechar? <span class="plus">+</span></summary>
+        <p>O SPL não é um sistema de "teste grátis" solto: ele acompanha o processo real da Câmara todos os dias e normalmente exige alguma customização de regimento. O caminho é uma conversa de diagnóstico, mostrando o sistema com a realidade da sua Câmara antes de decidir.</p>
+      </details>
+    </div>
+  </div>
+</section>
+
+<section class="cta-final section" id="contato">
+  <div class="wrap">
+    <h2>Pronto para modernizar sua Câmara?</h2>
+    <p>Fale com a gente antes de decidir sozinho: vamos entender o Regimento da sua Câmara primeiro.</p>
+    <div class="hero-ctas">
+      <a href="#" class="btn btn-white whatsapp-link" target="_blank" rel="noopener">Quero falar com um especialista</a>
+    </div>
+    <p class="hero-micro">Sem custo, sem compromisso.</p>
+  </div>
+</section>
+
+<footer class="site-footer">
+  <div class="wrap">
+    <div class="ps">
+      <b>P.S.:</b> O SPL não é mais um sistema de sessão com telão bonito. É o processo legislativo inteiro da sua Câmara, rastreável do rascunho à publicação, protegido contra vício de forma, com ou sem assessoria jurídica própria.
+    </div>
+    <div class="footer-main">
+      <div>
+        <div class="footer-brand"><img src="assets/spl-simbolo-branco.svg" alt="SPL: Sistema de Processo Legislativo" /></div>
+        <p class="footer-desc">Plataforma de gestão do processo legislativo municipal.</p>
+      </div>
+      <div class="footer-links">
+        <a href="#funcionalidades">Funcionalidades</a>
+        <a href="#seguranca">Segurança</a>
+        <a href="#faq">FAQ</a>
+        <a href="#">Política de Privacidade</a>
+        <a href="#">Termos de Uso</a>
+      </div>
+    </div>
+    <div class="footer-bottom">© 2026 SPL. Todos os direitos reservados.</div>
   </div>
 </footer>
-
-<div class="mobile-bar-spacer"></div>
-<div class="mobile-bar">
-  <a href="#" class="whatsapp-link" target="_blank" rel="noopener" style="display:flex; align-items:center; justify-content:center; width:100%; min-height:52px; background:#1D4065; color:#FFFFFF; font-size:16.5px; font-weight:500; border-radius:7px">Falar com um especialista</a>
-  <span style="font-size:12.5px; color:#566270">Conversa de 15 minutos · sem custo · sem compromisso</span>
-</div>
-
-</div>
 
 <script>
 (function () {
@@ -417,56 +698,41 @@
     el.setAttribute("href", WHATSAPP_URL);
   });
 
-  // Carousel
-  var track = document.getElementById("carousel-track");
-  var caption = document.getElementById("carousel-caption");
-  var dots = document.querySelectorAll(".carousel-dot");
-  var captions = [
-    "Painel da sessão: foto, partido e voto de cada vereador em tempo real.",
-    "Voto registrado pelo vereador — imutável depois de encerrada a votação.",
-    "Ordem do dia na tela do vereador, com pedido de palavra e fila de oradores."
-  ];
-  var slide = 0;
-  var auto = true;
-  var timer = null;
-  var touchStartX = null;
+  try { lucide.createIcons(); } catch(e) { console.error('Lucide falhou ao carregar', e); }
 
-  function render() {
-    track.style.transform = "translateX(-" + (slide * 33.3333) + "%)";
-    caption.textContent = captions[slide];
-    dots.forEach(function (btn, n) {
-      var dot = btn.querySelector(".dot");
-      dot.style.background = n === slide ? "#1D4065" : "#C3CAD1";
+  var hamburgerBtn = document.getElementById('hamburgerBtn');
+  var mobileMenu = document.getElementById('mobileMenu');
+  if (hamburgerBtn && mobileMenu) {
+    hamburgerBtn.addEventListener('click', function(){
+      var isOpen = mobileMenu.classList.toggle('open');
+      hamburgerBtn.setAttribute('aria-expanded', isOpen ? 'true' : 'false');
+    });
+    mobileMenu.querySelectorAll('a').forEach(function(a){
+      a.addEventListener('click', function(){
+        mobileMenu.classList.remove('open');
+        hamburgerBtn.setAttribute('aria-expanded', 'false');
+      });
     });
   }
 
-  function go(i) {
-    slide = ((i % 3) + 3) % 3;
-    auto = false;
-    render();
-  }
-
-  document.getElementById("carousel-prev").addEventListener("click", function () { go(slide - 1); });
-  document.getElementById("carousel-next").addEventListener("click", function () { go(slide + 1); });
-  dots.forEach(function (btn) {
-    btn.addEventListener("click", function () { go(parseInt(btn.dataset.index, 10)); });
-  });
-
-  var touchEl = document.getElementById("carousel-touch");
-  touchEl.addEventListener("touchstart", function (e) { touchStartX = e.touches[0].clientX; });
-  touchEl.addEventListener("touchend", function (e) {
-    if (touchStartX == null) return;
-    var dx = e.changedTouches[0].clientX - touchStartX;
-    if (Math.abs(dx) > 40) go(dx < 0 ? slide + 1 : slide - 1);
-    touchStartX = null;
-  });
-
-  timer = setInterval(function () {
-    if (auto) { slide = (slide + 1) % 3; render(); }
-  }, 6500);
-
-  render();
+  try {
+    var revealEls = document.querySelectorAll('[data-reveal]');
+    if ('IntersectionObserver' in window && revealEls.length) {
+      var io = new IntersectionObserver(function(entries){
+        entries.forEach(function(entry){
+          if (entry.isIntersecting) {
+            entry.target.classList.add('is-visible');
+            io.unobserve(entry.target);
+          }
+        });
+      }, { threshold: 0.15 });
+      revealEls.forEach(function(el){ io.observe(el); });
+    } else {
+      revealEls.forEach(function(el){ el.classList.add('is-visible'); });
+    }
+  } catch(e) { console.error('Reveal falhou', e); }
 })();
 </script>
+
 </body>
 </html>
